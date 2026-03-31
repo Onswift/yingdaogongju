@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  license-service:
+    build: .
+    container_name: license-service
+    ports:
+      - "8001:8000"
+    environment:
+      - DATABASE_URL=sqlite:///./data/license.db
+      - ADMIN_TOKEN=${ADMIN_TOKEN:-your-admin-token-change-me}
+      - DEBUG=False
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./data:/app/data
+    restart: always

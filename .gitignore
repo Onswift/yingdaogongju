@@ -1,0 +1,11 @@
+# Git 忽略文件
+__pycache__/
+*.pyc
+*.pyo
+.env
+*.db
+*.sqlite
+data/
+logs/
+*.log
+.DS_Store
