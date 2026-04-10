@@ -12,7 +12,7 @@ echo.
 echo Connecting to server...
 echo.
 
-ssh root@8.138.108.144 "cd /var/www/license-service && if not exist venv (python3 -m venv venv) && source venv/bin/activate && pip install --upgrade pip && pip install --upgrade pip && pip install -r requirements.txt && pkill -f uvicorn && sleep 1 && nohup python -m uvicorn app.main:app --host 0.0.0.0 --port 8001 > /var/log/license-service.log 2>&1 &"
+ssh root@8.138.108.144 "cd /var/www/license-service && [ ! -d venv ] && python3 -m venv venv || true && source venv/bin/activate && pip install --upgrade pip && pip install -r requirements.txt && pkill -f uvicorn || true && sleep 1 && nohup python -m uvicorn app.main:app --host 0.0.0.0 --port 8001 > /var/log/license-service.log 2>&1 &"
 
 echo.
 echo ========================================
