@@ -41,6 +41,10 @@ async def redeem(req: RedeemRequest, db: Session = Depends(get_db)):
         # 3. 查询或创建授权
         license = LicenseService.get_by_account(db, req.shadow_account)
 
+        # 检查是否已有授权（用于提示用户）
+        has_existing_license = license is not None
+        old_expire_at = license.expire_at.isoformat() if license and license.expire_at else None
+
         if not license:
             license = LicenseService.create_license(db, req.shadow_account, card.duration_days)
         else:
@@ -58,7 +62,10 @@ async def redeem(req: RedeemRequest, db: Session = Depends(get_db)):
         return success_response(data={
             "status": status,
             "expire_at": license.expire_at.isoformat(),
-            "remain_days": remain_days
+            "remain_days": remain_days,
+            "has_existing_license": has_existing_license,
+            "old_expire_at": old_expire_at,
+            "added_days": card.duration_days
         })
 
     except Exception as e:

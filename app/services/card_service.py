@@ -31,7 +31,7 @@ class CardService:
     ) -> Card:
         """创建单张卡密"""
         card_code = generate_card_code()
-        expire_at = datetime.utcnow() + timedelta(days=expire_days) if expire_days else None
+        expire_at = datetime.now() + timedelta(days=expire_days) if expire_days else None
 
         card = Card(
             card_code=card_code,
@@ -79,7 +79,7 @@ class CardService:
             return False, "卡密已被作废"
         if card.status == "expired":
             return False, "卡密已过期"
-        if card.expire_at and card.expire_at < datetime.utcnow():
+        if card.expire_at and card.expire_at < datetime.now():
             return False, "卡密已过期"
         return True, ""
 
@@ -88,7 +88,7 @@ class CardService:
         """标记卡密已使用"""
         card.status = "used"
         card.used_by = shadow_account
-        card.used_at = datetime.utcnow()
+        card.used_at = datetime.now()
         db.commit()
         logger.info(f"卡密 {card.card_code} 已使用，账号：{shadow_account}")
 
@@ -107,6 +107,8 @@ class CardService:
     def list_cards(
         db: Session,
         status: Optional[str] = None,
+        card_type: Optional[str] = None,
+        used_by: Optional[str] = None,
         source: Optional[str] = None,
         limit: int = 100,
         offset: int = 0
@@ -115,6 +117,10 @@ class CardService:
         query = db.query(Card)
         if status:
             query = query.filter(Card.status == status)
+        if card_type:
+            query = query.filter(Card.card_type == card_type)
+        if used_by:
+            query = query.filter(Card.used_by.like(f"%{used_by}%"))
         if source:
             query = query.filter(Card.source == source)
         total = query.count()

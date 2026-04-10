@@ -21,12 +21,12 @@ class LicenseService:
     @staticmethod
     def create_license(db: Session, shadow_account: str, duration_days: int) -> License:
         """创建新授权"""
-        expire_at = datetime.utcnow() + timedelta(days=duration_days)
+        expire_at = datetime.now() + timedelta(days=duration_days)
         license = License(
             shadow_account=shadow_account,
             status="active",
             expire_at=expire_at,
-            activated_at=datetime.utcnow()
+            activated_at=datetime.now()
         )
         db.add(license)
         db.commit()
@@ -37,14 +37,14 @@ class LicenseService:
     @staticmethod
     def extend_license(db: Session, license: License, duration_days: int) -> License:
         """延长授权"""
-        now = datetime.utcnow()
+        now = datetime.now()
         if license.expire_at > now:
             new_expire = license.expire_at + timedelta(days=duration_days)
         else:
             new_expire = now + timedelta(days=duration_days)
         license.expire_at = new_expire
         license.status = "active"
-        license.updated_at = datetime.utcnow()
+        license.updated_at = datetime.now()
         db.commit()
         db.refresh(license)
         logger.info(f"延长授权：account={license.shadow_account}, 新到期={new_expire}")
@@ -53,7 +53,7 @@ class LicenseService:
     @staticmethod
     def get_license_status(license: License) -> Tuple[str, int]:
         """获取授权状态和剩余天数"""
-        now = datetime.utcnow()
+        now = datetime.now()
         delta = license.expire_at - now
         remain_days = max(0, delta.days)
         if license.status == "banned":
@@ -65,7 +65,7 @@ class LicenseService:
     @staticmethod
     def update_last_check(db: Session, license: License) -> None:
         """更新最后检查时间"""
-        license.last_check_at = datetime.utcnow()
+        license.last_check_at = datetime.now()
         db.commit()
 
     @staticmethod
@@ -104,7 +104,7 @@ class LicenseService:
         license = LicenseService.get_by_account(db, shadow_account)
         if not license:
             return None
-        now = datetime.utcnow()
+        now = datetime.now()
         if license.expire_at > now:
             new_expire = license.expire_at + timedelta(days=days)
         else:
@@ -126,3 +126,54 @@ class LicenseService:
         db.commit()
         db.refresh(license)
         return license
+
+    @staticmethod
+    def undo_redeem(db: Session, card_code: str, shadow_account: str) -> tuple:
+        """
+        撤销兑换（恢复卡密，扣除授权天数）
+
+        返回：
+            (success: bool, message: str)
+        """
+        from app.services.card_service import CardService
+
+        # 1. 查询卡密
+        card = CardService.get_by_code(db, card_code)
+        if not card:
+            return False, "卡密不存在"
+
+        if card.status != "used":
+            return False, "卡密未使用，无法撤销"
+
+        if card.used_by != shadow_account:
+            return False, "该卡密不是此账号兑换的"
+
+        # 2. 查询授权
+        license = LicenseService.get_by_account(db, shadow_account)
+        if not license:
+            return False, "授权不存在"
+
+        # 3. 恢复卡密状态
+        card.status = "unused"
+        card.used_by = None
+        card.used_at = None
+        db.commit()
+
+        # 4. 扣除授权天数（从到期时间减去）
+        from datetime import timedelta
+        license.expire_at = license.expire_at - timedelta(days=card.duration_days)
+
+        # 如果到期时间已过，设置为过期
+        if license.expire_at < datetime.now():
+            license.status = "expired"
+
+        license.updated_at = datetime.now()
+        db.commit()
+        db.refresh(license)
+
+        # 5. 写日志
+        LicenseService.write_license_log(db, shadow_account, "undo_redeem", "success",
+            f"撤销兑换，卡密：{card_code}, 扣除{card.duration_days}天")
+
+        logger.info(f"撤销兑换：account={shadow_account}, card={card_code}")
+        return True, f"已撤销兑换，扣除{card.duration_days}天授权"

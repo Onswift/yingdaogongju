@@ -1,6 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 import logging
+import os
 
 from app.core.config import settings
 from app.core.database import init_db
@@ -33,6 +36,21 @@ app.add_middleware(
 # 注册路由
 app.include_router(user_router)
 app.include_router(admin_router)
+
+# 挂载静态文件目录
+static_path = os.path.join(os.path.dirname(__file__), "static")
+os.makedirs(static_path, exist_ok=True)
+app.mount("/static", StaticFiles(directory=static_path), name="static")
+
+# 管理后台页面
+@app.get("/admin", response_class=HTMLResponse)
+async def admin_page():
+    """管理后台页面"""
+    static_file = os.path.join(static_path, "admin.html")
+    if os.path.exists(static_file):
+        with open(static_file, "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    return HTMLResponse(content="<h1>请将 admin.html 放到 app/static/ 目录</h1>", status_code=404)
 
 
 @app.on_event("startup")

@@ -1,30 +1,24 @@
-  @echo off
-  echo ========================================
-  echo         一键部署到服务器
-  echo ========================================
-  echo.
+@echo off
+echo ========================================
+echo         Deploy to Server
+echo ========================================
+echo.
 
-  git add .
-  git commit -m "auto deploy"
-  git push
+git add .
+git commit -m "auto deploy"
+git push
 
-  if errorlevel 1 (
-      echo.
-      echo [错误] Git 推送失败
-      pause
-      exit /b 1
-  )
+echo.
+echo Connecting to server...
+echo.
 
-  echo.
-  echo [成功] 代码已推送
-  echo.
-  echo [正在部署] 连接服务器...
-  echo.
+ssh root@8.138.108.144 "cd /opt/license-service && [ ! -d venv ] && python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt && pkill -f uvicorn && nohup python -m uvicorn app.main:app --host 0.0.0.0 --port 8001 > /var/log/license-service.log 2>&1 &"
 
-  ssh root@8.138.108.144 "bash /opt/license-service/deploy.sh"
-
-  echo.
-  echo ========================================
-  echo         部署完成！
-  echo ========================================
-  pause
+echo.
+echo ========================================
+echo         Deploy Complete!
+echo ========================================
+echo Access: http://8.138.108.144:8001/admin
+echo Token: dev-token
+echo ========================================
+pause

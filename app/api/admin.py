@@ -7,7 +7,7 @@ import secrets
 from app.core.database import get_db
 from app.core.response import success_response, error_response, ErrorCode
 from app.core.config import settings
-from app.schemas.card import CardGenerateRequest, DisableCardRequest
+from app.schemas.card import CardGenerateRequest, DisableCardRequest, UndoRedeemRequest
 from app.schemas.license import AdminExtendRequest
 from app.services.card_service import CardService
 from app.services.license_service import LicenseService
@@ -49,6 +49,8 @@ async def generate_cards(
 @router.get("/cards", response_model=dict, summary="查询卡密列表")
 async def list_cards(
     status: Optional[str] = None,
+    type: Optional[str] = None,
+    used_by: Optional[str] = None,
     source: Optional[str] = None,
     page: int = 1,
     page_size: int = 20,
@@ -58,7 +60,7 @@ async def list_cards(
     """查询卡密列表"""
     try:
         offset = (page - 1) * page_size
-        cards, total = CardService.list_cards(db, status=status, source=source, limit=page_size, offset=offset)
+        cards, total = CardService.list_cards(db, status=status, card_type=type, used_by=used_by, source=source, limit=page_size, offset=offset)
         return success_response(data={
             "total": total,
             "page": page,
@@ -165,6 +167,23 @@ async def ban_account(
         return success_response(message="账号已禁用")
     except Exception as e:
         logger.exception("禁用账号失败")
+        return error_response(ErrorCode.INTERNAL_ERROR, str(e))
+
+
+@router.post("/licenses/undo-redeem", response_model=dict, summary="撤销兑换")
+async def undo_redeem(
+    req: UndoRedeemRequest,
+    db: Session = Depends(get_db),
+    admin_token: str = Depends(verify_admin)
+):
+    """撤销卡密兑换（恢复卡密，扣除授权天数）"""
+    try:
+        success, message = LicenseService.undo_redeem(db, req.card_code, req.shadow_account)
+        if not success:
+            return error_response(ErrorCode.BAD_REQUEST, message)
+        return success_response(message=message)
+    except Exception as e:
+        logger.exception("撤销兑换失败")
         return error_response(ErrorCode.INTERNAL_ERROR, str(e))
 
 

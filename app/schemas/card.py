@@ -38,3 +38,9 @@ class CardListResponse(BaseModel):
 class DisableCardRequest(BaseModel):
     """作废卡密请求"""
     card_code: str = Field(..., description="卡密")
+
+
+class UndoRedeemRequest(BaseModel):
+    """撤销兑换请求"""
+    card_code: str = Field(..., description="卡密代码")
+    shadow_account: str = Field(..., description="影刀账号")
