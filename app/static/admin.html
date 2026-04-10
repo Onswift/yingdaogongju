@@ -171,9 +171,88 @@
             align-items: center;
             margin-bottom: 15px;
         }
+
+        .settings-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            z-index: 1000;
+        }
+        .settings-panel h3 {
+            font-size: 14px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .settings-panel input {
+            width: 200px;
+            margin-bottom: 10px;
+        }
+        .settings-panel button {
+            padding: 5px 15px;
+            font-size: 12px;
+        }
+        .settings-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #007bff;
+            color: #fff;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            z-index: 999;
+            font-size: 12px;
+        }
+        .token-error {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #fff;
+            border: 2px solid #dc3545;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            z-index: 2000;
+            max-width: 400px;
+        }
+        .token-error h3 {
+            color: #dc3545;
+            margin-bottom: 15px;
+        }
+        .token-error input {
+            width: 100%;
+            margin-bottom: 15px;
+        }
+        .token-error button {
+            margin-right: 10px;
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1999;
+        }
     </style>
 </head>
 <body>
+    <button class="settings-toggle" onclick="toggleSettings()">⚙️ Token 设置</button>
+
+    <div class="settings-panel" id="settings-panel" style="display: none;">
+        <h3>管理员 Token 设置</h3>
+        <input type="text" id="token-input" placeholder="输入管理员 Token">
+        <button onclick="saveToken()">保存</button>
+        <button onclick="toggleSettings()">关闭</button>
+    </div>
     <div class="container">
         <h1>🔐 授权管理后台</h1>
 
@@ -283,6 +362,85 @@
         const API_BASE = '';  // 使用相对路径
         const DEFAULT_TOKEN = 'dev-token';
         let ADMIN_TOKEN = localStorage.getItem('admin_token') || DEFAULT_TOKEN;
+
+        // Token 验证标志
+        let tokenVerified = false;
+
+        // 切换设置面板
+        function toggleSettings() {
+            const panel = document.getElementById('settings-panel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // 保存 Token
+        function saveToken() {
+            const token = document.getElementById('token-input').value.trim();
+            if (!token) {
+                alert('Token 不能为空');
+                return;
+            }
+            ADMIN_TOKEN = token;
+            localStorage.setItem('admin_token', token);
+            alert('Token 已保存！页面将刷新。');
+            location.reload();
+        }
+
+        // 显示 Token 错误弹窗
+        function showTokenError() {
+            // 如果已经有弹窗，不再重复显示
+            if (document.querySelector('.token-error')) return;
+
+            const overlay = document.createElement('div');
+            overlay.className = 'overlay';
+            document.body.appendChild(overlay);
+
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'token-error';
+            errorDiv.innerHTML = `
+                <h3>⚠️ Token 验证失败</h3>
+                <p style="margin-bottom: 15px; color: #666;">当前 Token 无效，请输入正确的管理员 Token。</p>
+                <input type="text" id="token-error-input" placeholder="输入管理员 Token" value="${ADMIN_TOKEN}">
+                <button class="success" onclick="saveTokenFromError()">保存</button>
+                <button onclick="closeTokenError()">取消</button>
+            `;
+            document.body.appendChild(errorDiv);
+        }
+
+        // 从错误弹窗保存 Token
+        function saveTokenFromError() {
+            const token = document.getElementById('token-error-input').value.trim();
+            if (!token) {
+                alert('Token 不能为空');
+                return;
+            }
+            ADMIN_TOKEN = token;
+            localStorage.setItem('admin_token', token);
+            closeTokenError();
+            location.reload();
+        }
+
+        // 关闭 Token 错误弹窗
+        function closeTokenError() {
+            const overlay = document.querySelector('.overlay');
+            const errorDiv = document.querySelector('.token-error');
+            if (overlay) overlay.remove();
+            if (errorDiv) errorDiv.remove();
+        }
+
+        // 验证 Token（测试接口）
+        async function verifyToken() {
+            try {
+                const resp = await fetch(`${API_BASE}/admin/cards?page=1&page_size=1`, {
+                    headers: { 'X-Admin-Token': ADMIN_TOKEN }
+                });
+                if (resp.status === 401 || resp.status === 403) {
+                    return false;
+                }
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
 
         let currentPage = 1;
         const pageSize = 20;
@@ -601,15 +759,27 @@
         }
 
         // 初始化
-        loadCards();
-        loadLicenses();
-        loadStats();
+        async function init() {
+            // 验证 Token
+            const valid = await verifyToken();
+            if (!valid) {
+                showTokenError();
+                return;
+            }
 
-        // 定时刷新
-        setInterval(() => {
+            // Token 验证成功，加载数据
+            loadCards();
             loadLicenses();
             loadStats();
-        }, 30000);
+
+            // 定时刷新
+            setInterval(() => {
+                loadLicenses();
+                loadStats();
+            }, 30000);
+        }
+
+        init();
     </script>
 </body>
 </html>
