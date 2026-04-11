@@ -18,7 +18,7 @@
 """
 
 # ==================== 配置区域 ====================
-API_URL = "http://localhost:8000/api"      # 服务器地址
+API_URL = "http://8.138.108.144:8001/api"  # 服务器 API 地址
 SHADOW_ACCOUNT = "test_user"               # 影刀账号
 TEST_CARD_CODE = ""                        # 测试卡密（可选）
 MAX_ROUNDS = 10                            # 最大运行轮数
