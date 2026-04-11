@@ -4,283 +4,669 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>授权管理后台</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            /* 色彩方案 - 财务仪表盘/生产力工具 */
+            --primary: #3B82F6;
+            --primary-hover: #2563EB;
+            --primary-light: #DBEAFE;
+            --success: #22C55E;
+            --success-bg: #DCFCE7;
+            --warning: #F59E0B;
+            --warning-bg: #FEF3C7;
+            --danger: #EF4444;
+            --danger-bg: #FEE2E2;
+            --bg-primary: #F8FAFC;
+            --bg-secondary: #FFFFFF;
+            --text-primary: #1E293B;
+            --text-secondary: #64748B;
+            --text-muted: #94A3B8;
+            --border: #E2E8F0;
+            --shadow: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
+            --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+            --radius: 12px;
+            --radius-sm: 8px;
+            --radius-lg: 16px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f5f5f5;
-            padding: 20px;
-        }
-        .container { max-width: 1200px; margin: 0 auto; }
-        h1 { color: #333; margin-bottom: 20px; }
-
-        .card {
-            background: #fff;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
         }
 
-        .form-group { margin-bottom: 15px; }
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
-            color: #555;
-        }
-        .form-row {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-        .form-row .form-group { flex: 1; min-width: 150px; }
-
-        input, select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-
-        button {
-            background: #007bff;
-            color: #fff;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        button:hover { background: #0056b3; }
-        button.success { background: #28a745; }
-        button.success:hover { background: #1e7e34; }
-        button.danger { background: #dc3545; }
-        button.danger:hover { background: #c82333; }
-        button:disabled { background: #ccc; cursor: not-allowed; }
-
-        .stats {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-        .stat-item {
-            background: #f8f9fa;
-            padding: 15px 20px;
-            border-radius: 6px;
-            text-align: center;
-            flex: 1;
-            min-width: 120px;
-        }
-        .stat-item .num {
-            font-size: 24px;
-            font-weight: bold;
-            color: #007bff;
-        }
-        .stat-item .label {
-            font-size: 12px;
-            color: #666;
-            margin-top: 5px;
-        }
-
-        textarea {
-            width: 100%;
-            min-height: 200px;
-            padding: 15px;
-            font-family: 'Consolas', monospace;
-            font-size: 13px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            resize: vertical;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-        }
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #eee;
-        }
-        th { background: #f8f9fa; font-weight: 500; }
-        tr:hover { background: #f8f9fa; }
-
-        .status {
-            padding: 3px 8px;
-            border-radius: 3px;
-            font-size: 12px;
-        }
-        .status.unused { background: #d4edda; color: #155724; }
-        .status.used { background: #cce5ff; color: #004085; }
-        .status.disabled { background: #f8d7da; color: #721c24; }
-        .status.expired { background: #fff3cd; color: #856404; }
-        .status.active { background: #d4edda; color: #155724; }
-        .status.expired { background: #fff3cd; color: #856404; }
-        .status.banned { background: #f8d7da; color: #721c24; }
-
-        .btn-group { display: flex; gap: 8px; }
-        .loading { opacity: 0.5; pointer-events: none; }
-
-        .message {
-            padding: 10px 15px;
-            border-radius: 4px;
-            margin-bottom: 15px;
-        }
-        .message.success { background: #d4edda; color: #155724; }
-        .message.error { background: #f8d7da; color: #721c24; }
-
-        .copy-btn {
-            padding: 5px 10px;
-            font-size: 12px;
-            margin-left: 10px;
-        }
-
-        .card-code-cell {
-            font-family: monospace;
-            cursor: pointer;
-            user-select: all;
-            transition: background-color 0.2s;
-            border-radius: 4px;
-            padding: 2px 4px;
-        }
-        .card-code-cell:hover {
-            background-color: #e8f4ff;
-        }
-        .card-code-cell:active {
-            background-color: #cce5ff;
-        }
-
-        .filter-row {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        .filter-row select, .filter-row input {
-            width: auto;
-            min-width: 150px;
-        }
-
-        .pagination {
-            display: flex;
-            justify-content: center;
-            gap: 5px;
-            margin-top: 20px;
-        }
-        .pagination button {
-            padding: 5px 12px;
-        }
-
-        .refresh-info {
-            font-size: 12px;
-            color: #666;
-            margin-left: 10px;
-        }
-
-        .header-actions {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        /* 登录页面样式 */
+        /* 登录页面 */
         .login-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1E293B 0%, #334155 100%);
             display: flex;
             justify-content: center;
             align-items: center;
             z-index: 9999;
         }
+
         .login-box {
-            background: #fff;
+            background: var(--bg-secondary);
             padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
         }
+
         .login-box h1 {
             text-align: center;
-            color: #333;
-            margin-bottom: 30px;
+            color: var(--text-primary);
+            margin-bottom: 12px;
             font-size: 24px;
+            font-weight: 600;
         }
+
+        .login-box .subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 32px;
+        }
+
         .login-box .form-group {
             margin-bottom: 20px;
         }
+
         .login-box label {
             display: block;
             margin-bottom: 8px;
             font-weight: 500;
-            color: #555;
+            color: var(--text-primary);
+            font-size: 14px;
         }
+
         .login-box input {
             width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 6px;
+            padding: 12px 16px;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
             font-size: 14px;
-            transition: border-color 0.3s;
+            transition: all 0.2s;
+            font-family: inherit;
         }
+
         .login-box input:focus {
-            border-color: #667eea;
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
         }
+
         .login-box button {
             width: 100%;
-            padding: 12px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 14px;
+            background: var(--primary);
             color: #fff;
             border: none;
-            border-radius: 6px;
-            font-size: 16px;
+            border-radius: var(--radius-sm);
+            font-size: 15px;
+            font-weight: 500;
             cursor: pointer;
-            transition: transform 0.2s;
+            transition: all 0.2s;
+            font-family: inherit;
         }
+
         .login-box button:hover {
-            transform: translateY(-2px);
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
         }
+
         .login-box button:disabled {
-            background: #ccc;
+            background: var(--text-muted);
+            cursor: not-allowed;
             transform: none;
         }
+
         .login-box .message {
-            padding: 10px;
-            border-radius: 6px;
+            padding: 12px;
+            border-radius: var(--radius-sm);
             margin-bottom: 20px;
             text-align: center;
+            font-size: 14px;
         }
+
         .login-box .message.success {
-            background: #d4edda;
-            color: #155724;
+            background: var(--success-bg);
+            color: #166534;
         }
+
         .login-box .message.error {
-            background: #f8d7da;
-            color: #721c24;
+            background: var(--danger-bg);
+            color: #991B1B;
         }
-        .logout-btn {
-            position: fixed;
-            top: 20px;
-            right: 80px;
-            background: #dc3545;
-            color: #fff;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 4px;
+
+        /* 主容器 */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        /* 顶部导航 */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header h1 .icon {
+            font-size: 28px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-weight: 500;
             cursor: pointer;
-            z-index: 999;
-            font-size: 12px;
+            transition: all 0.2s;
+            border: none;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
-        .logout-btn:hover {
-            background: #c82333;
+
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-primary);
+            border-color: var(--text-muted);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        .btn-danger:hover {
+            background: #DC2626;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: #fff;
+        }
+
+        .btn-success:hover {
+            background: #16A34A;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+
+        /* 便当盒网格统计卡片 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--bg-secondary);
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: var(--shadow);
+            transition: all 0.2s;
+            border: 1px solid var(--border);
+        }
+
+        .stat-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .stat-card .icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 16px;
+        }
+
+        .stat-card .icon.blue { background: var(--primary-light); }
+        .stat-card .icon.green { background: var(--success-bg); }
+        .stat-card .icon.orange { background: var(--warning-bg); }
+        .stat-card .icon.red { background: var(--danger-bg); }
+
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1.2;
+        }
+
+        .stat-card .label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .stat-card .trend {
+            font-size: 12px;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .stat-card .trend.up { color: var(--success); }
+        .stat-card .trend.down { color: var(--danger); }
+
+        /* 内容卡片 */
+        .card {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .card-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-header h2 .icon {
+            font-size: 20px;
+        }
+
+        /* 筛选器 */
+        .filters {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filters select,
+        .filters input {
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-family: inherit;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            min-width: 140px;
+            transition: all 0.2s;
+        }
+
+        .filters select:focus,
+        .filters input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        /* 表格 */
+        .table-container {
+            overflow-x: auto;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th {
+            background: var(--bg-primary);
+            padding: 14px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: var(--bg-primary);
+        }
+
+        /* 状态标签 */
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .status::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+
+        .status.unused { background: var(--success-bg); color: #166534; }
+        .status.unused::before { background: var(--success); }
+
+        .status.used { background: var(--primary-light); color: #1E40AF; }
+        .status.used::before { background: var(--primary); }
+
+        .status.disabled { background: var(--danger-bg); color: #991B1B; }
+        .status.disabled::before { background: var(--danger); }
+
+        .status.expired { background: var(--warning-bg); color: #92400E; }
+        .status.expired::before { background: var(--warning); }
+
+        .status.active { background: var(--success-bg); color: #166534; }
+        .status.active::before { background: var(--success); }
+
+        .status.banned { background: var(--danger-bg); color: #991B1B; }
+        .status.banned::before { background: var(--danger); }
+
+        /* 卡密单元格 - 可点击复制 */
+        .card-code-cell {
+            font-family: 'JetBrains Mono', 'Consolas', monospace;
+            cursor: pointer;
+            user-select: all;
+            transition: all 0.2s;
+            border-radius: var(--radius-sm);
+            padding: 6px 10px;
+            display: inline-block;
+            background: var(--bg-primary);
+            border: 1px solid transparent;
+        }
+
+        .card-code-cell:hover {
+            background: var(--primary-light);
+            border-color: var(--primary);
+            color: var(--primary-hover);
+        }
+
+        .card-code-cell:active {
+            transform: scale(0.98);
+        }
+
+        /* 操作按钮组 */
+        .btn-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* 分页 */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 24px;
+        }
+
+        .pagination button {
+            padding: 8px 16px;
+            border: 1px solid var(--border);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .pagination button:hover:not(:disabled) {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination .info {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        /* Toast 通知 */
+        .toast {
+            position: fixed;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100%);
+            background: var(--text-primary);
+            color: #fff;
+            padding: 14px 24px;
+            border-radius: var(--radius);
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 10000;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success { background: var(--success); }
+        .toast.error { background: var(--danger); }
+
+        /* 设置面板 */
+        .settings-panel {
+            position: fixed;
+            top: 80px;
+            right: 24px;
+            background: var(--bg-secondary);
+            padding: 20px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            z-index: 1000;
+            border: 1px solid var(--border);
+            min-width: 300px;
+        }
+
+        .settings-panel h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+
+        .settings-panel input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            margin-bottom: 12px;
+            font-family: inherit;
+        }
+
+        .settings-panel .actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* 响应式 */
+        @media (max-width: 1024px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                padding: 16px;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 16px;
+                align-items: flex-start;
+            }
+
+            .filters {
+                width: 100%;
+            }
+
+            .filters select,
+            .filters input {
+                flex: 1;
+                min-width: 100%;
+            }
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state .icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-state p {
+            font-size: 16px;
+        }
+
+        /* 加载骨架屏 */
+        .skeleton {
+            background: linear-gradient(90deg, var(--bg-primary) 25%, var(--border) 50%, var(--bg-primary) 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite;
+            border-radius: var(--radius-sm);
+        }
+
+        @keyframes skeleton-loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* 生成卡密文本域 */
+        .cards-output {
+            width: 100%;
+            min-height: 200px;
+            padding: 16px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-family: 'JetBrains Mono', 'Consolas', monospace;
+            font-size: 14px;
+            resize: vertical;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            margin-top: 16px;
+        }
+
+        .cards-output:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        .generate-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
         }
     </style>
 </head>
@@ -289,82 +675,111 @@
     <div class="login-overlay" id="login-overlay">
         <div class="login-box">
             <h1>🔐 授权管理后台</h1>
+            <p class="subtitle">请输入管理员 Token 继续</p>
             <div id="login-message"></div>
             <div class="form-group">
-                <label>管理员 Token</label>
+                <label for="login-token">管理员 Token</label>
                 <input type="password" id="login-token" placeholder="请输入管理员 Token" onkeypress="if(event.keyCode===13) login()">
             </div>
             <button onclick="login()" id="login-btn">登录</button>
         </div>
     </div>
 
-    <!-- 退出登录按钮 -->
-    <button class="logout-btn" onclick="logout()" style="display: none;" id="logout-btn">退出登录</button>
-    <!-- 设置按钮 -->
-    <button class="settings-toggle" onclick="toggleSettings()" style="display: none;" id="settings-btn">⚙️ 设置</button>
-
-    <div class="settings-panel" id="settings-panel" style="display: none;">
-        <h3>管理员 Token 设置</h3>
-        <input type="text" id="token-input" placeholder="输入管理员 Token">
-        <button onclick="saveToken()">保存</button>
-        <button onclick="toggleSettings()">关闭</button>
+    <!-- Toast 通知 -->
+    <div class="toast" id="toast">
+        <span class="toast-icon">✓</span>
+        <span class="toast-message"></span>
     </div>
-    <div class="container">
-        <h1>🔐 授权管理后台</h1>
+
+    <!-- 主界面 -->
+    <div class="container" id="main-container" style="display: none;">
+        <!-- 顶部导航 -->
+        <div class="header">
+            <h1>
+                <span class="icon">🎛️</span>
+                授权管理后台
+            </h1>
+            <div class="header-actions">
+                <button class="btn btn-secondary btn-sm" onclick="toggleSettings()">
+                    ⚙️ 设置
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="logout()">
+                    退出登录
+                </button>
+            </div>
+        </div>
+
+        <!-- 设置面板 -->
+        <div class="settings-panel" id="settings-panel" style="display: none;">
+            <h3>管理员 Token 设置</h3>
+            <input type="text" id="token-input" placeholder="输入新的管理员 Token">
+            <div class="actions">
+                <button class="btn btn-primary btn-sm" onclick="saveToken()">保存</button>
+                <button class="btn btn-secondary btn-sm" onclick="toggleSettings()">关闭</button>
+            </div>
+        </div>
 
         <!-- 统计卡片 -->
-        <div class="card">
-            <div class="stats">
-                <div class="stat-item">
-                    <div class="num" id="stat-total">-</div>
-                    <div class="label">总卡密数</div>
-                </div>
-                <div class="stat-item">
-                    <div class="num" id="stat-unused">-</div>
-                    <div class="label">未使用</div>
-                </div>
-                <div class="stat-item">
-                    <div class="num" id="stat-used">-</div>
-                    <div class="label">已使用</div>
-                </div>
-                <div class="stat-item">
-                    <div class="num" id="stat-disabled">-</div>
-                    <div class="label">已禁用</div>
-                </div>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="icon blue">📦</div>
+                <div class="value" id="stat-total">-</div>
+                <div class="label">总卡密数</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon green">✅</div>
+                <div class="value" id="stat-unused">-</div>
+                <div class="label">未使用</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon orange">✓</div>
+                <div class="value" id="stat-used">-</div>
+                <div class="label">已使用</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon red">🚫</div>
+                <div class="value" id="stat-disabled">-</div>
+                <div class="label">已禁用</div>
             </div>
         </div>
 
         <!-- 生成卡密 -->
         <div class="card">
-            <h2>生成卡密</h2>
-            <br>
+            <div class="card-header">
+                <h2>
+                    <span class="icon">✨</span>
+                    生成卡密
+                </h2>
+            </div>
             <div id="generate-msg"></div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>卡密类型</label>
+            <div class="filters" style="margin-bottom: 16px;">
+                <div class="form-group" style="flex: 1; min-width: 150px;">
                     <select id="card-type" onchange="updateDurationDays()">
                         <option value="month" data-days="30">月卡 (30 天)</option>
                         <option value="quarter" data-days="90">季卡 (90 天)</option>
                         <option value="year" data-days="365">年卡 (365 天)</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label>生成数量</label>
-                    <input type="number" id="quantity" value="10" min="1" max="100">
+                <div class="form-group" style="flex: 1; min-width: 120px;">
+                    <input type="number" id="quantity" value="10" min="1" max="100" placeholder="数量">
                 </div>
-                <div class="form-group">
-                    <label>来源</label>
-                    <input type="text" id="source" placeholder="可选，如：淘宝店">
+                <div class="form-group" style="flex: 2; min-width: 200px;">
+                    <input type="text" id="source" placeholder="来源标识（可选）">
                 </div>
+                <button class="btn btn-success" onclick="generateCards()">
+                    ✨ 生成卡密
+                </button>
             </div>
-            <button class="success" onclick="generateCards()">生成卡密</button>
         </div>
 
         <!-- 卡密列表 -->
         <div class="card">
-            <div class="header-actions">
-                <h2>卡密列表</h2>
-                <div class="filter-row">
+            <div class="card-header">
+                <h2>
+                    <span class="icon">📋</span>
+                    卡密列表
+                </h2>
+                <div class="filters">
                     <select id="filter-status" onchange="loadCards()">
                         <option value="">全部状态</option>
                         <option value="unused">未使用</option>
@@ -378,14 +793,37 @@
                         <option value="quarter">季卡</option>
                         <option value="year">年卡</option>
                     </select>
-                    <input type="text" id="filter-used-by" placeholder="搜索使用者" onchange="loadCards()">
-                    <input type="text" id="filter-source" placeholder="来源筛选" onchange="loadCards()">
-                    <button onclick="loadCards()">刷新</button>
+                    <input type="text" id="filter-used-by" placeholder="使用者" onchange="loadCards()">
+                    <input type="text" id="filter-source" placeholder="来源" onchange="loadCards()">
+                    <button class="btn btn-secondary btn-sm" onclick="loadCards()">
+                        🔄 刷新
+                    </button>
                 </div>
             </div>
 
-            <div id="cards-table">
-                <p style="text-align: center; color: #999; padding: 40px;">加载中...</p>
+            <div class="table-container">
+                <table id="cards-table">
+                    <thead>
+                        <tr>
+                            <th>卡密</th>
+                            <th>类型</th>
+                            <th>天数</th>
+                            <th>状态</th>
+                            <th>使用者</th>
+                            <th>使用日期</th>
+                            <th>来源</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="8" class="empty-state">
+                                <div class="icon">📭</div>
+                                <p>加载中...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
 
             <div class="pagination" id="pagination"></div>
@@ -393,34 +831,85 @@
 
         <!-- 授权列表 -->
         <div class="card">
-            <div class="header-actions">
-                <h2>授权列表</h2>
-                <div class="filter-row">
+            <div class="card-header">
+                <h2>
+                    <span class="icon">🔑</span>
+                    授权列表
+                </h2>
+                <div class="filters">
                     <select id="license-status" onchange="loadLicenses()">
                         <option value="">全部状态</option>
                         <option value="active">活跃</option>
                         <option value="expired">已过期</option>
                         <option value="banned">已禁用</option>
                     </select>
-                    <button onclick="loadLicenses()">刷新</button>
-                    <span class="refresh-info">每 30 秒自动刷新</span>
+                    <button class="btn btn-secondary btn-sm" onclick="loadLicenses()">
+                        🔄 刷新
+                    </button>
+                    <span style="font-size: 12px; color: var(--text-muted);">每 30 秒自动刷新</span>
                 </div>
             </div>
 
-            <div id="licenses-table">
-                <p style="text-align: center; color: #999; padding: 40px;">加载中...</p>
+            <div class="table-container">
+                <table id="licenses-table">
+                    <thead>
+                        <tr>
+                            <th>影刀账号</th>
+                            <th>状态</th>
+                            <th>到期时间</th>
+                            <th>剩余天数</th>
+                            <th>激活时间</th>
+                            <th>最后检查</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="6" class="empty-state">
+                                <div class="icon">📭</div>
+                                <p>加载中...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 
     <script>
-        // 配置
-        const API_BASE = '';  // 使用相对路径
+        const API_BASE = '';
         let ADMIN_TOKEN = localStorage.getItem('admin_token') || '';
         let isLoggedIn = false;
-
         let currentPage = 1;
         const pageSize = 20;
+
+        // Toast 通知
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.querySelector('.toast-message').textContent = message;
+            toast.querySelector('.toast-icon').textContent = type === 'success' ? '✓' : '✕';
+            toast.className = 'toast ' + type;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        // 复制卡密
+        function copyCardCode(cardCode) {
+            navigator.clipboard.writeText(cardCode).then(() => {
+                showToast('已复制：' + cardCode, 'success');
+            }).catch(err => {
+                showToast('复制失败', 'error');
+            });
+        }
+
+        // 复制全部卡密
+        function copyAllCards() {
+            const textarea = document.getElementById('new-cards');
+            if (textarea) {
+                textarea.select();
+                document.execCommand('copy');
+                showToast('已复制全部卡密', 'success');
+            }
+        }
 
         // 登录
         async function login() {
@@ -442,28 +931,23 @@
                 });
 
                 if (resp.status === 401 || resp.status === 403) {
-                    msgDiv.innerHTML = '<div class="message error">Token 错误，请重新输入</div>';
+                    msgDiv.innerHTML = '<div class="message error">Token 无效，请重新输入</div>';
                     btn.disabled = false;
                     btn.textContent = '登录';
                     return;
                 }
 
-                // 登录成功
                 ADMIN_TOKEN = token;
                 localStorage.setItem('admin_token', token);
                 isLoggedIn = true;
 
-                // 隐藏登录页面，显示主界面
                 document.getElementById('login-overlay').style.display = 'none';
-                document.getElementById('logout-btn').style.display = 'block';
-                document.getElementById('settings-btn').style.display = 'block';
+                document.getElementById('main-container').style.display = 'block';
 
-                // 加载数据
                 loadCards();
                 loadLicenses();
                 loadStats();
 
-                // 定时刷新
                 setInterval(() => {
                     loadLicenses();
                     loadStats();
@@ -484,11 +968,29 @@
             }
         }
 
-        // 根据卡密类型自动更新天数
+        // 切换设置面板
+        function toggleSettings() {
+            const panel = document.getElementById('settings-panel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // 保存 Token
+        function saveToken() {
+            const token = document.getElementById('token-input').value.trim();
+            if (!token) {
+                showToast('Token 不能为空', 'error');
+                return;
+            }
+            ADMIN_TOKEN = token;
+            localStorage.setItem('admin_token', token);
+            showToast('Token 已保存', 'success');
+            setTimeout(() => location.reload(), 1000);
+        }
+
+        // 更新天数
         function updateDurationDays() {
             const select = document.getElementById('card-type');
-            const selectedOption = select.options[select.selectedIndex];
-            return parseInt(selectedOption.getAttribute('data-days'));
+            return parseInt(select.options[select.selectedIndex].getAttribute('data-days'));
         }
 
         // 生成卡密
@@ -516,60 +1018,33 @@
                 const msgDiv = document.getElementById('generate-msg');
 
                 if (data.code === 0) {
+                    const cardsHtml = data.data.card_codes.join('\n');
                     msgDiv.innerHTML = `
-                        <div class="message success">
-                            <strong>生成成功！共 ${data.data.count} 个卡密</strong><br><br>
-                            <textarea id="new-cards" readonly>${data.data.card_codes.join('\n')}</textarea>
-                            <div style="margin-top: 10px;">
-                                <button onclick="document.getElementById('new-cards').select()">全选</button>
-                                <button class="success" onclick="copyCards()">复制全部</button>
+                        <div style="background: var(--success-bg); border: 1px solid var(--success); border-radius: var(--radius); padding: 16px; margin-bottom: 16px;">
+                            <div style="color: #166534; font-weight: 500; margin-bottom: 8px;">
+                                ✓ 生成成功！共 ${data.data.count} 个卡密
+                            </div>
+                            <textarea id="new-cards" class="cards-output" readonly>${cardsHtml}</textarea>
+                            <div class="generate-actions">
+                                <button class="btn btn-primary btn-sm" onclick="copyAllCards()">📋 复制全部</button>
+                                <button class="btn btn-secondary btn-sm" onclick="this.parentElement.parentElement.remove()">关闭</button>
                             </div>
                         </div>
                     `;
                     loadCards();
                     loadStats();
+                    showToast('卡密生成成功', 'success');
                 } else {
-                    msgDiv.innerHTML = `<div class="message error">${data.message}</div>`;
+                    msgDiv.innerHTML = `<div style="background: var(--danger-bg); border: 1px solid var(--danger); border-radius: var(--radius); padding: 16px; color: #991B1B;">${data.message}</div>`;
+                    showToast('生成失败', 'error');
                 }
             } catch (e) {
-                document.getElementById('generate-msg').innerHTML = `<div class="message error">请求失败：${e.message}</div>`;
+                document.getElementById('generate-msg').innerHTML = `<div style="background: var(--danger-bg); border: 1px solid var(--danger); border-radius: var(--radius); padding: 16px; color: #991B1B;">请求失败：${e.message}</div>`;
+                showToast('请求失败', 'error');
             } finally {
                 btn.disabled = false;
-                btn.textContent = '生成卡密';
+                btn.textContent = '✨ 生成卡密';
             }
-        }
-
-        function copyCards() {
-            const textarea = document.getElementById('new-cards');
-            textarea.select();
-            document.execCommand('copy');
-            alert('已复制到剪贴板！');
-        }
-
-        // 复制单个卡密
-        function copyCardCode(cardCode) {
-            navigator.clipboard.writeText(cardCode).then(() => {
-                // 显示成功提示
-                const toast = document.createElement('div');
-                toast.textContent = '✓ 卡密已复制：' + cardCode;
-                toast.style.cssText = `
-                    position: fixed;
-                    top: 20px;
-                    left: 50%;
-                    transform: translateX(-50%);
-                    background: #28a745;
-                    color: #fff;
-                    padding: 12px 24px;
-                    border-radius: 6px;
-                    font-size: 14px;
-                    z-index: 10000;
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                `;
-                document.body.appendChild(toast);
-                setTimeout(() => toast.remove(), 2000);
-            }).catch(err => {
-                alert('复制失败：' + err.message);
-            });
         }
 
         // 加载卡密列表
@@ -579,16 +1054,12 @@
             const usedBy = document.getElementById('filter-used-by').value;
             const source = document.getElementById('filter-source').value;
 
-            try {
-                const params = new URLSearchParams({
-                    status: status,
-                    type: type,
-                    used_by: usedBy,
-                    source: source,
-                    page: currentPage,
-                    page_size: pageSize
-                });
+            const params = new URLSearchParams({
+                status, type, used_by: usedBy, source,
+                page: currentPage, page_size: pageSize
+            });
 
+            try {
                 const resp = await fetch(`${API_BASE}/admin/cards?${params}`, {
                     headers: { 'X-Admin-Token': ADMIN_TOKEN }
                 });
@@ -597,10 +1068,10 @@
                 if (data.code === 0) {
                     renderCards(data.data);
                 } else {
-                    document.getElementById('cards-table').innerHTML = `<p style="color: red;">${data.message}</p>`;
+                    document.getElementById('cards-table').innerHTML = `<tr><td colspan="8" class="empty-state"><div class="icon">⚠️</div><p>${data.message}</p></td></tr>`;
                 }
             } catch (e) {
-                document.getElementById('cards-table').innerHTML = `<p style="color: red;">加载失败：${e.message}</p>`;
+                document.getElementById('cards-table').innerHTML = `<tr><td colspan="8" class="empty-state"><div class="icon">❌</div><p>加载失败</p></td></tr>`;
             }
         }
 
@@ -608,61 +1079,60 @@
             const { cards, total, page, page_size } = data;
 
             if (!cards || cards.length === 0) {
-                document.getElementById('cards-table').innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">暂无数据</p>';
+                document.getElementById('cards-table').innerHTML = `<tr><td colspan="8" class="empty-state"><div class="icon">📭</div><p>暂无数据</p></td></tr>`;
                 document.getElementById('pagination').innerHTML = '';
                 return;
             }
 
-            let html = `
-                <table>
-                    <thead>
-                        <tr>
-                            <th>卡密</th>
-                            <th>类型</th>
-                            <th>天数</th>
-                            <th>状态</th>
-                            <th>使用者</th>
-                            <th>使用日期</th>
-                            <th>来源</th>
-                            <th>操作</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-
+            let html = '';
             cards.forEach(card => {
                 html += `
                     <tr>
                         <td><span class="card-code-cell" onclick="copyCardCode('${card.card_code}')" title="点击复制">${card.card_code}</span></td>
                         <td>${card.card_type}</td>
                         <td>${card.duration_days}天</td>
-                        <td><span class="status ${card.status}">${card.status}</span></td>
+                        <td><span class="status ${card.status}">${card.status === 'unused' ? '未使用' : card.status === 'used' ? '已使用' : card.status === 'disabled' ? '已禁用' : '已过期'}</span></td>
                         <td>${card.used_by || '-'}</td>
                         <td>${card.used_at ? card.used_at.split('T')[0] : '-'}</td>
                         <td>${card.source || '-'}</td>
                         <td>
-                            ${card.status === 'unused' ? `
-                                <button class="danger" onclick="disableCard('${card.card_code}')" style="padding: 3px 8px; font-size: 12px;">作废</button>
-                            ` : ''}
-                            ${card.status === 'used' ? `
-                                <button onclick="undoRedeem('${card.card_code}', '${card.used_by || ''}')" style="padding: 3px 8px; font-size: 12px; background: #ff9800;">撤销</button>
-                            ` : ''}
-                            ${card.status !== 'unused' && card.status !== 'used' ? '-' : ''}
+                            <div class="btn-group">
+                                ${card.status === 'unused' ? `
+                                    <button class="btn btn-danger btn-sm" onclick="disableCard('${card.card_code}')">作废</button>
+                                ` : ''}
+                                ${card.status === 'used' ? `
+                                    <button class="btn btn-secondary btn-sm" onclick="undoRedeem('${card.card_code}', '${card.used_by || ''}')" style="background: #FEF3C7; color: #92400E; border-color: #FDE68A;">撤销</button>
+                                ` : ''}
+                                ${card.status !== 'unused' && card.status !== 'used' ? '<span style="color: var(--text-muted); font-size: 13px;">-</span>' : ''}
+                            </div>
                         </td>
                     </tr>
                 `;
             });
 
-            html += '</tbody></table>';
-            document.getElementById('cards-table').innerHTML = html;
+            document.getElementById('cards-table').innerHTML = `
+                <thead>
+                    <tr>
+                        <th>卡密</th>
+                        <th>类型</th>
+                        <th>天数</th>
+                        <th>状态</th>
+                        <th>使用者</th>
+                        <th>使用日期</th>
+                        <th>来源</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>${html}</tbody>
+            `;
 
             // 分页
             const totalPages = Math.ceil(total / page_size);
             let pagination = '';
             if (totalPages > 1) {
-                if (page > 1) pagination += `<button onclick="goToPage(${page - 1})">上一页</button>`;
-                pagination += `<span style="padding: 5px 10px;">第 ${page} / ${totalPages} 页</span>`;
-                if (page < totalPages) pagination += `<button onclick="goToPage(${page + 1})">下一页</button>`;
+                pagination += `<button onclick="goToPage(${page - 1})" ${page === 1 ? 'disabled' : ''}>上一页</button>`;
+                pagination += `<span class="info">第 ${page} / ${totalPages} 页 · 共 ${total} 条</span>`;
+                pagination += `<button onclick="goToPage(${page + 1})" ${page === totalPages ? 'disabled' : ''}>下一页</button>`;
             }
             document.getElementById('pagination').innerHTML = pagination;
         }
@@ -688,24 +1158,24 @@
                 const data = await resp.json();
 
                 if (data.code === 0) {
-                    alert('作废成功');
+                    showToast('卡密已作废', 'success');
                     loadCards();
                     loadStats();
                 } else {
-                    alert(`失败：${data.message}`);
+                    showToast(data.message, 'error');
                 }
             } catch (e) {
-                alert(`请求失败：${e.message}`);
+                showToast('请求失败', 'error');
             }
         }
 
         // 撤销兑换
         function undoRedeem(cardCode, shadowAccount) {
             if (!shadowAccount) {
-                alert('该卡密没有绑定账号');
+                showToast('该卡密没有绑定账号', 'error');
                 return;
             }
-            if (!confirm(`确定要撤销卡密 ${cardCode} 的兑换吗？\n\n账号：${shadowAccount}\n\n撤销后：\n- 卡密恢复为未使用状态\n- 该账号的授权天数将扣除相应天数`)) return;
+            if (!confirm(`确定要撤销卡密 ${cardCode} 的兑换吗？\n\n账号：${shadowAccount}\n\n撤销后卡密将恢复为未使用状态，账号授权天数将扣除相应天数。`)) return;
 
             fetch(`${API_BASE}/admin/licenses/undo-redeem`, {
                 method: 'POST',
@@ -721,30 +1191,25 @@
             .then(resp => resp.json())
             .then(data => {
                 if (data.code === 0) {
-                    alert(`撤销成功！\n${data.message}`);
+                    showToast('撤销成功！' + data.message, 'success');
                     loadCards();
                     loadLicenses();
                     loadStats();
                 } else {
-                    alert(`撤销失败：${data.message}`);
+                    showToast(data.message, 'error');
                 }
             })
             .catch(e => {
-                alert(`请求失败：${e.message}`);
-            })
+                showToast('请求失败', 'error');
+            });
         }
 
         // 加载授权列表
         async function loadLicenses() {
             const status = document.getElementById('license-status').value;
+            const params = new URLSearchParams({ status, page: 1, page_size: 100 });
 
             try {
-                const params = new URLSearchParams({
-                    status: status,
-                    page: 1,
-                    page_size: 100
-                });
-
                 const resp = await fetch(`${API_BASE}/admin/licenses?${params}`, {
                     headers: { 'X-Admin-Token': ADMIN_TOKEN }
                 });
@@ -762,39 +1227,38 @@
             const { licenses } = data;
 
             if (!licenses || licenses.length === 0) {
-                document.getElementById('licenses-table').innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">暂无数据</p>';
+                document.getElementById('licenses-table').innerHTML = `<tr><td colspan="6" class="empty-state"><div class="icon">📭</div><p>暂无数据</p></td></tr>`;
                 return;
             }
 
-            let html = `
-                <table>
-                    <thead>
-                        <tr>
-                            <th>影刀账号</th>
-                            <th>状态</th>
-                            <th>到期时间</th>
-                            <th>激活时间</th>
-                            <th>最后检查</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-
+            let html = '';
             licenses.forEach(l => {
                 const remainDays = Math.max(0, Math.floor((new Date(l.expire_at) - new Date()) / (1000*60*60*24)));
                 html += `
                     <tr>
-                        <td>${l.shadow_account}</td>
-                        <td><span class="status ${l.status}">${l.status}</span> ${l.status === 'active' ? `(剩余${remainDays}天)` : ''}</td>
+                        <td style="font-weight: 500;">${l.shadow_account}</td>
+                        <td><span class="status ${l.status}">${l.status === 'active' ? '活跃' : l.status === 'expired' ? '已过期' : '已禁用'}</span></td>
                         <td>${l.expire_at.replace('T', ' ').split('.')[0]}</td>
+                        <td style="${remainDays <= 7 ? 'color: var(--danger); font-weight: 500;' : ''}">${remainDays}天</td>
                         <td>${l.activated_at ? l.activated_at.replace('T', ' ').split('.')[0] : '-'}</td>
                         <td>${l.last_check_at ? l.last_check_at.replace('T', ' ').split('.')[0] : '-'}</td>
                     </tr>
                 `;
             });
 
-            html += '</tbody></table>';
-            document.getElementById('licenses-table').innerHTML = html;
+            document.getElementById('licenses-table').innerHTML = `
+                <thead>
+                    <tr>
+                        <th>影刀账号</th>
+                        <th>状态</th>
+                        <th>到期时间</th>
+                        <th>剩余天数</th>
+                        <th>激活时间</th>
+                        <th>最后检查</th>
+                    </tr>
+                </thead>
+                <tbody>${html}</tbody>
+            `;
         }
 
         // 加载统计
@@ -823,23 +1287,13 @@
             }
         }
 
-        // 切换设置面板
-        function toggleSettings() {
-            const panel = document.getElementById('settings-panel');
-            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-        }
-
-        // 保存 Token
-        function saveToken() {
-            const token = document.getElementById('token-input').value.trim();
-            if (!token) {
-                alert('Token 不能为空');
-                return;
-            }
-            ADMIN_TOKEN = token;
-            localStorage.setItem('admin_token', token);
-            alert('Token 已保存！页面将刷新。');
-            location.reload();
+        // 检查是否已登录
+        if (ADMIN_TOKEN) {
+            document.getElementById('login-overlay').style.display = 'none';
+            document.getElementById('main-container').style.display = 'block';
+            loadCards();
+            loadLicenses();
+            loadStats();
         }
     </script>
 </body>
