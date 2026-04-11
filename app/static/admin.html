@@ -138,6 +138,21 @@
             margin-left: 10px;
         }
 
+        .card-code-cell {
+            font-family: monospace;
+            cursor: pointer;
+            user-select: all;
+            transition: background-color 0.2s;
+            border-radius: 4px;
+            padding: 2px 4px;
+        }
+        .card-code-cell:hover {
+            background-color: #e8f4ff;
+        }
+        .card-code-cell:active {
+            background-color: #cce5ff;
+        }
+
         .filter-row {
             display: flex;
             gap: 10px;
@@ -531,6 +546,32 @@
             alert('已复制到剪贴板！');
         }
 
+        // 复制单个卡密
+        function copyCardCode(cardCode) {
+            navigator.clipboard.writeText(cardCode).then(() => {
+                // 显示成功提示
+                const toast = document.createElement('div');
+                toast.textContent = '✓ 卡密已复制：' + cardCode;
+                toast.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: #28a745;
+                    color: #fff;
+                    padding: 12px 24px;
+                    border-radius: 6px;
+                    font-size: 14px;
+                    z-index: 10000;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                `;
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 2000);
+            }).catch(err => {
+                alert('复制失败：' + err.message);
+            });
+        }
+
         // 加载卡密列表
         async function loadCards() {
             const status = document.getElementById('filter-status').value;
@@ -592,7 +633,7 @@
             cards.forEach(card => {
                 html += `
                     <tr>
-                        <td style="font-family: monospace;">${card.card_code}</td>
+                        <td><span class="card-code-cell" onclick="copyCardCode('${card.card_code}')" title="点击复制">${card.card_code}</span></td>
                         <td>${card.card_type}</td>
                         <td>${card.duration_days}天</td>
                         <td><span class="status ${card.status}">${card.status}</span></td>
