@@ -128,6 +128,17 @@ class LicenseService:
         return license
 
     @staticmethod
+    def unban_account(db: Session, shadow_account: str) -> Optional[License]:
+        """解禁账号"""
+        license = LicenseService.get_by_account(db, shadow_account)
+        if not license:
+            return None
+        license.status = "active"
+        db.commit()
+        db.refresh(license)
+        return license
+
+    @staticmethod
     def undo_redeem(db: Session, card_code: str, shadow_account: str) -> tuple:
         """
         撤销兑换（恢复卡密，扣除授权天数）

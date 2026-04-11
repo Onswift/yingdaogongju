@@ -1204,6 +1204,54 @@
             });
         }
 
+        // 禁用账号
+        function banAccount(shadowAccount) {
+            if (!confirm(`确定要禁用账号 ${shadowAccount} 吗？\n\n禁用后该账号将无法通过授权校验，即使有有效授权也无法使用。`)) return;
+
+            fetch(`${API_BASE}/admin/licenses/ban?shadow_account=${encodeURIComponent(shadowAccount)}`, {
+                method: 'POST',
+                headers: {
+                    'X-Admin-Token': ADMIN_TOKEN
+                }
+            })
+            .then(resp => resp.json())
+            .then(data => {
+                if (data.code === 0) {
+                    showToast('账号已禁用', 'success');
+                    loadLicenses();
+                } else {
+                    showToast(data.message, 'error');
+                }
+            })
+            .catch(e => {
+                showToast('请求失败', 'error');
+            });
+        }
+
+        // 解禁账号
+        function unbanAccount(shadowAccount) {
+            if (!confirm(`确定要解禁账号 ${shadowAccount} 吗？\n\n解禁后该账号将恢复正常的授权校验。`)) return;
+
+            fetch(`${API_BASE}/admin/licenses/unban?shadow_account=${encodeURIComponent(shadowAccount)}`, {
+                method: 'POST',
+                headers: {
+                    'X-Admin-Token': ADMIN_TOKEN
+                }
+            })
+            .then(resp => resp.json())
+            .then(data => {
+                if (data.code === 0) {
+                    showToast('账号已解禁', 'success');
+                    loadLicenses();
+                } else {
+                    showToast(data.message, 'error');
+                }
+            })
+            .catch(e => {
+                showToast('请求失败', 'error');
+            });
+        }
+
         // 加载授权列表
         async function loadLicenses() {
             const status = document.getElementById('license-status').value;
@@ -1242,6 +1290,15 @@
                         <td style="${remainDays <= 7 ? 'color: var(--danger); font-weight: 500;' : ''}">${remainDays}天</td>
                         <td>${l.activated_at ? l.activated_at.replace('T', ' ').split('.')[0] : '-'}</td>
                         <td>${l.last_check_at ? l.last_check_at.replace('T', ' ').split('.')[0] : '-'}</td>
+                        <td>
+                            <div class="btn-group">
+                                ${l.status !== 'banned' ? `
+                                    <button class="btn btn-danger btn-sm" onclick="banAccount('${l.shadow_account}')">禁用</button>
+                                ` : `
+                                    <button class="btn btn-success btn-sm" onclick="unbanAccount('${l.shadow_account}')" style="background: var(--success); color: #fff;">解禁</button>
+                                `}
+                            </div>
+                        </td>
                     </tr>
                 `;
             });
@@ -1255,6 +1312,7 @@
                         <th>剩余天数</th>
                         <th>激活时间</th>
                         <th>最后检查</th>
+                        <th>操作</th>
                     </tr>
                 </thead>
                 <tbody>${html}</tbody>

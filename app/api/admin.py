@@ -170,6 +170,24 @@ async def ban_account(
         return error_response(ErrorCode.INTERNAL_ERROR, str(e))
 
 
+@router.post("/licenses/unban", response_model=dict, summary="解禁账号")
+async def unban_account(
+    shadow_account: str,
+    db: Session = Depends(get_db),
+    admin_token: str = Depends(verify_admin)
+):
+    """解禁指定账号"""
+    try:
+        license = LicenseService.unban_account(db, shadow_account)
+        if not license:
+            return error_response(ErrorCode.LICENSE_NOT_FOUND, "授权不存在")
+        LicenseService.write_license_log(db, shadow_account, "admin_update", "success", "账号被解禁")
+        return success_response(message="账号已解禁")
+    except Exception as e:
+        logger.exception("解禁账号失败")
+        return error_response(ErrorCode.INTERNAL_ERROR, str(e))
+
+
 @router.post("/licenses/undo-redeem", response_model=dict, summary="撤销兑换")
 async def undo_redeem(
     req: UndoRedeemRequest,
