@@ -53,6 +53,17 @@ async def admin_page():
     return HTMLResponse(content="<h1>请将 admin.html 放到 app/static/ 目录</h1>", status_code=404)
 
 
+# 新版管理后台页面（预览）
+@app.get("/admin-v2", response_class=HTMLResponse)
+async def admin_v2_page():
+    """新版管理后台页面（UI 重构预览）"""
+    static_file = os.path.join(static_path, "admin-v2.html")
+    if os.path.exists(static_file):
+        with open(static_file, "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    return HTMLResponse(content="<h1>admin-v2.html 不存在</h1>", status_code=404)
+
+
 @app.on_event("startup")
 async def startup_event():
     """应用启动时初始化"""
