@@ -254,7 +254,7 @@
         /* 便当盒网格统计卡片 */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);  /* 5 个卡片 */
+            grid-template-columns: repeat(4, 1fr);
             gap: 16px;
             margin-bottom: 24px;
         }
@@ -580,21 +580,15 @@
         }
 
         /* 响应式 */
-        @media (max-width: 1200px) {
-            .stats-grid {
-                grid-template-columns: repeat(5, 1fr);  /* 5 个卡片 */
-            }
-        }
-
         @media (max-width: 1024px) {
             .stats-grid {
-                grid-template-columns: repeat(3, 1fr);
+                grid-template-columns: repeat(2, 1fr);
             }
         }
 
         @media (max-width: 768px) {
             .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
+                grid-template-columns: 1fr;
             }
 
             .container {
@@ -746,11 +740,6 @@
                 <div class="icon red">🚫</div>
                 <div class="value" id="stat-disabled">-</div>
                 <div class="label">已禁用</div>
-            </div>
-            <div class="stat-card">
-                <div class="icon" style="background: #FFF3CD;">⏰</div>
-                <div class="value" id="stat-expired">-</div>
-                <div class="label">已过期</div>
             </div>
         </div>
 
@@ -1355,8 +1344,7 @@
                     { key: 'total', url: '' },
                     { key: 'unused', url: 'status=unused' },
                     { key: 'used', url: 'status=used' },
-                    { key: 'disabled', url: 'status=disabled' },
-                    { key: 'expired', url: 'status=expired' }
+                    { key: 'disabled', url: 'status=disabled' }
                 ];
 
                 const requests = statuses.map(s => {
@@ -1370,7 +1358,7 @@
                 const results = await Promise.all(requests);
 
                 // 更新统计卡片
-                const map = { 'total': 'stat-total', 'unused': 'stat-unused', 'used': 'stat-used', 'disabled': 'stat-disabled', 'expired': 'stat-expired' };
+                const map = { 'total': 'stat-total', 'unused': 'stat-unused', 'used': 'stat-used', 'disabled': 'stat-disabled' };
                 statuses.forEach((s, i) => {
                     if (results[i].code === 0 && map[s.key]) {
                         document.getElementById(map[s.key]).textContent = results[i].data.total;
@@ -1378,11 +1366,11 @@
                 });
 
                 // 验证总数是否正确
-                const sum = ['unused', 'used', 'disabled', 'expired']
+                const sum = ['unused', 'used', 'disabled']
                     .reduce((acc, key, i) => acc + (results[i + 1].code === 0 ? results[i + 1].data.total : 0), 0);
                 const total = results[0].code === 0 ? results[0].data.total : 0;
                 if (sum !== total) {
-                    console.warn(`统计不一致：总数=${total}, 分项和=${sum}`);
+                    console.warn(`统计不一致：总数=${total}, 分项和=${sum}（可能有已过期卡密）`);
                 }
             } catch (e) {
                 console.error('加载统计失败:', e);
