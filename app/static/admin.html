@@ -1056,22 +1056,28 @@
 
             const params = new URLSearchParams({
                 status, type, used_by: usedBy, source,
-                page: currentPage, page_size: pageSize
+                page: currentPage, page_size: pageSize,
+                _t: Date.now()  // 防止缓存
             });
 
             try {
                 const resp = await fetch(`${API_BASE}/admin/cards?${params}`, {
-                    headers: { 'X-Admin-Token': ADMIN_TOKEN }
+                    headers: { 'X-Admin-Token': ADMIN_TOKEN },
+                    cache: 'no-cache'  // 禁用缓存
                 });
                 const data = await resp.json();
+                console.log('卡密列表加载成功:', data.data?.cards?.length || 0, '条');
 
                 if (data.code === 0) {
                     renderCards(data.data);
                 } else {
                     document.getElementById('cards-table').innerHTML = `<tr><td colspan="8" class="empty-state"><div class="icon">⚠️</div><p>${data.message}</p></td></tr>`;
+                    showToast(data.message, 'error');
                 }
             } catch (e) {
-                document.getElementById('cards-table').innerHTML = `<tr><td colspan="8" class="empty-state"><div class="icon">❌</div><p>加载失败</p></td></tr>`;
+                console.error('加载卡密列表失败:', e);
+                document.getElementById('cards-table').innerHTML = `<tr><td colspan="8" class="empty-state"><div class="icon">❌</div><p>网络错误</p></td></tr>`;
+                showToast('网络错误，请检查服务器连接', 'error');
             }
         }
 
@@ -1255,19 +1261,30 @@
         // 加载授权列表
         async function loadLicenses() {
             const status = document.getElementById('license-status').value;
-            const params = new URLSearchParams({ status, page: 1, page_size: 100 });
+            // 添加时间戳防止缓存
+            const params = new URLSearchParams({
+                status,
+                page: 1,
+                page_size: 100,
+                _t: Date.now()  // 防止缓存
+            });
 
             try {
                 const resp = await fetch(`${API_BASE}/admin/licenses?${params}`, {
-                    headers: { 'X-Admin-Token': ADMIN_TOKEN }
+                    headers: { 'X-Admin-Token': ADMIN_TOKEN },
+                    cache: 'no-cache'  // 禁用缓存
                 });
                 const data = await resp.json();
+                console.log('授权列表加载成功:', data.data?.licenses?.length || 0, '条');
 
                 if (data.code === 0) {
                     renderLicenses(data.data);
+                } else {
+                    showToast(data.message || '加载失败', 'error');
                 }
             } catch (e) {
                 console.error('加载授权失败:', e);
+                showToast('网络错误，请检查服务器连接', 'error');
             }
         }
 
