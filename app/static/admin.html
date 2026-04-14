@@ -254,7 +254,7 @@
         /* 便当盒网格统计卡片 */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(5, 1fr);  /* 5 个卡片 */
             gap: 16px;
             margin-bottom: 24px;
         }
@@ -580,15 +580,21 @@
         }
 
         /* 响应式 */
+        @media (max-width: 1200px) {
+            .stats-grid {
+                grid-template-columns: repeat(5, 1fr);  /* 5 个卡片 */
+            }
+        }
+
         @media (max-width: 1024px) {
             .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
+                grid-template-columns: repeat(3, 1fr);
             }
         }
 
         @media (max-width: 768px) {
             .stats-grid {
-                grid-template-columns: 1fr;
+                grid-template-columns: repeat(2, 1fr);
             }
 
             .container {
@@ -740,6 +746,11 @@
                 <div class="icon red">🚫</div>
                 <div class="value" id="stat-disabled">-</div>
                 <div class="label">已禁用</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon" style="background: #FFF3CD;">⏰</div>
+                <div class="value" id="stat-expired">-</div>
+                <div class="label">已过期</div>
             </div>
         </div>
 
@@ -1339,23 +1350,39 @@
         // 加载统计
         async function loadStats() {
             try {
-                const resp = await fetch(`${API_BASE}/admin/cards?page=1&page_size=1`, {
-                    headers: { 'X-Admin-Token': ADMIN_TOKEN }
+                // 并发请求所有状态统计
+                const statuses = [
+                    { key: 'total', url: '' },
+                    { key: 'unused', url: 'status=unused' },
+                    { key: 'used', url: 'status=used' },
+                    { key: 'disabled', url: 'status=disabled' },
+                    { key: 'expired', url: 'status=expired' }
+                ];
+
+                const requests = statuses.map(s => {
+                    const url = s.url ? `${API_BASE}/admin/cards?${s.url}&page=1&page_size=1` : `${API_BASE}/admin/cards?page=1&page_size=1`;
+                    return fetch(url, {
+                        headers: { 'X-Admin-Token': ADMIN_TOKEN },
+                        cache: 'no-cache'
+                    }).then(r => r.json());
                 });
-                const data = await resp.json();
 
-                if (data.code === 0) {
-                    document.getElementById('stat-total').textContent = data.data.total;
-                }
+                const results = await Promise.all(requests);
 
-                for (const status of ['unused', 'used', 'disabled']) {
-                    const r = await fetch(`${API_BASE}/admin/cards?status=${status}&page=1&page_size=1`, {
-                        headers: { 'X-Admin-Token': ADMIN_TOKEN }
-                    });
-                    const d = await r.json();
-                    if (d.code === 0) {
-                        document.getElementById(`stat-${status}`).textContent = d.data.total;
+                // 更新统计卡片
+                const map = { 'total': 'stat-total', 'unused': 'stat-unused', 'used': 'stat-used', 'disabled': 'stat-disabled', 'expired': 'stat-expired' };
+                statuses.forEach((s, i) => {
+                    if (results[i].code === 0 && map[s.key]) {
+                        document.getElementById(map[s.key]).textContent = results[i].data.total;
                     }
+                });
+
+                // 验证总数是否正确
+                const sum = ['unused', 'used', 'disabled', 'expired']
+                    .reduce((acc, key, i) => acc + (results[i + 1].code === 0 ? results[i + 1].data.total : 0), 0);
+                const total = results[0].code === 0 ? results[0].data.total : 0;
+                if (sum !== total) {
+                    console.warn(`统计不一致：总数=${total}, 分项和=${sum}`);
                 }
             } catch (e) {
                 console.error('加载统计失败:', e);
