@@ -1031,8 +1031,8 @@
                             </div>
                         </div>
                     `;
-                    loadCards();
-                    loadStats();
+                    await loadCards();
+                    await loadStats();
                     showToast('卡密生成成功', 'success');
                 } else {
                     msgDiv.innerHTML = `<div style="background: var(--danger-bg); border: 1px solid var(--danger); border-radius: var(--radius); padding: 16px; color: #991B1B;">${data.message}</div>`;
@@ -1165,8 +1165,8 @@
 
                 if (data.code === 0) {
                     showToast('卡密已作废', 'success');
-                    loadCards();
-                    loadStats();
+                    await loadCards();
+                    await loadStats();
                 } else {
                     showToast(data.message, 'error');
                 }
@@ -1338,6 +1338,13 @@
 
         // 加载统计
         async function loadStats() {
+            // 添加加载状态提示
+            const statElements = ['stat-total', 'stat-unused', 'stat-used', 'stat-disabled'];
+            statElements.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.opacity = '0.6';
+            });
+
             try {
                 // 并发请求所有状态统计
                 const statuses = [
@@ -1348,7 +1355,7 @@
                 ];
 
                 const requests = statuses.map(s => {
-                    const url = s.url ? `${API_BASE}/admin/cards?${s.url}&page=1&page_size=1` : `${API_BASE}/admin/cards?page=1&page_size=1`;
+                    const url = s.url ? `${API_BASE}/admin/cards?${s.url}&page=1&page_size=1&_t=${Date.now()}` : `${API_BASE}/admin/cards?page=1&page_size=1&_t=${Date.now()}`;
                     return fetch(url, {
                         headers: { 'X-Admin-Token': ADMIN_TOKEN },
                         cache: 'no-cache'
@@ -1374,6 +1381,12 @@
                 }
             } catch (e) {
                 console.error('加载统计失败:', e);
+            } finally {
+                // 恢复透明度
+                statElements.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.opacity = '1';
+                });
             }
         }
 
