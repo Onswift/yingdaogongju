@@ -1331,6 +1331,7 @@
                         <td style="${remainDays <= 7 ? 'color: var(--danger); font-weight: 500;' : ''}">${remainDays}天</td>
                         <td>${l.activated_at ? l.activated_at.replace('T', ' ').split('.')[0] : '-'}</td>
                         <td>${l.last_check_at ? l.last_check_at.replace('T', ' ').split('.')[0] : '-'}</td>
+                        <td style="font-family: monospace; font-size: 12px; color: #666;">${l.device_fingerprint ? l.device_fingerprint.substring(0, 16) + '...' : '未绑定'}</td>
                         <td>
                             <div class="btn-group">
                                 ${l.status !== 'banned' ? `
@@ -1356,6 +1357,7 @@
                         <th>剩余天数</th>
                         <th>激活时间</th>
                         <th>最后检查</th>
+                        <th>设备指纹</th>
                         <th>操作</th>
                     </tr>
                 </thead>
