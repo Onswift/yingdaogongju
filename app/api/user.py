@@ -76,16 +76,24 @@ async def redeem(req: RedeemRequest, db: Session = Depends(get_db)):
 @router.post("/check-license", response_model=dict, summary="校验授权")
 async def check_license(req: LicenseCheckRequest, db: Session = Depends(get_db)):
     """
-    校验授权状态
+    校验授权状态（支持单设备登录）
 
     - **shadow_account**: 影刀账号
+    - **device_fingerprint**: 设备指纹（可选，用于单设备登录）
     """
     try:
-        # 1. 查询授权
-        license = LicenseService.get_by_account(db, req.shadow_account)
-        if not license:
-            LicenseService.write_license_log(db, req.shadow_account, "check", "failure", "授权不存在")
-            return error_response(ErrorCode.LICENSE_NOT_FOUND, "授权不存在")
+        # 1. 设备指纹校验（如果提供）
+        if req.device_fingerprint:
+            allowed, msg, license = LicenseService.check_and_bind_device(db, req.shadow_account, req.device_fingerprint)
+            if not allowed:
+                LicenseService.write_license_log(db, req.shadow_account, "check", "failure", msg)
+                return error_response(ErrorCode.LICENSE_NOT_FOUND, msg)
+        else:
+            # 未提供设备指纹，使用传统校验
+            license = LicenseService.get_by_account(db, req.shadow_account)
+            if not license:
+                LicenseService.write_license_log(db, req.shadow_account, "check", "failure", "授权不存在")
+                return error_response(ErrorCode.LICENSE_NOT_FOUND, "授权不存在")
 
         # 2. 获取状态
         status, remain_days = LicenseService.get_license_status(license)
@@ -110,14 +118,21 @@ async def check_license(req: LicenseCheckRequest, db: Session = Depends(get_db))
 @router.post("/heartbeat", response_model=dict, summary="心跳上报")
 async def heartbeat(req: LicenseCheckRequest, db: Session = Depends(get_db)):
     """
-    心跳上报（轻量级校验）
+    心跳上报（轻量级校验，支持单设备登录）
 
     - **shadow_account**: 影刀账号
+    - **device_fingerprint**: 设备指纹（可选，用于单设备登录）
     """
     try:
-        license = LicenseService.get_by_account(db, req.shadow_account)
-        if not license:
-            return error_response(ErrorCode.LICENSE_NOT_FOUND, "授权不存在")
+        # 设备指纹校验（如果提供）
+        if req.device_fingerprint:
+            allowed, msg, license = LicenseService.check_and_bind_device(db, req.shadow_account, req.device_fingerprint)
+            if not allowed:
+                return error_response(ErrorCode.LICENSE_NOT_FOUND, msg)
+        else:
+            license = LicenseService.get_by_account(db, req.shadow_account)
+            if not license:
+                return error_response(ErrorCode.LICENSE_NOT_FOUND, "授权不存在")
 
         status, remain_days = LicenseService.get_license_status(license)
         LicenseService.update_last_check(db, license)

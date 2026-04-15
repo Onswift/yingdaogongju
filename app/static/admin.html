@@ -1258,6 +1258,30 @@
             });
         }
 
+        // 解绑设备
+        function unbindDevice(shadowAccount) {
+            if (!confirm(`确定要解绑账号 ${shadowAccount} 的设备吗？\n\n解绑后该账号可以在新设备上重新绑定，原设备将无法继续使用。`)) return;
+
+            fetch(`${API_BASE}/admin/licenses/unbind-device?shadow_account=${encodeURIComponent(shadowAccount)}`, {
+                method: 'POST',
+                headers: {
+                    'X-Admin-Token': ADMIN_TOKEN
+                }
+            })
+            .then(resp => resp.json())
+            .then(data => {
+                if (data.code === 0) {
+                    showToast('设备已解绑', 'success');
+                    loadLicenses();
+                } else {
+                    showToast(data.message, 'error');
+                }
+            })
+            .catch(e => {
+                showToast('请求失败', 'error');
+            });
+        }
+
         // 加载授权列表
         async function loadLicenses() {
             const status = document.getElementById('license-status').value;
@@ -1314,6 +1338,9 @@
                                 ` : `
                                     <button class="btn btn-success btn-sm" onclick="unbanAccount('${l.shadow_account}')" style="background: var(--success); color: #fff;">解禁</button>
                                 `}
+                                ${l.device_fingerprint ? `
+                                    <button class="btn btn-secondary btn-sm" onclick="unbindDevice('${l.shadow_account}')" style="background: #6c757d; color: #fff;" title="解绑后可在新设备重新绑定">解绑设备</button>
+                                ` : ''}
                             </div>
                         </td>
                     </tr>

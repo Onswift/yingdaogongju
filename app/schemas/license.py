@@ -19,6 +19,7 @@ class RedeemResponse(BaseModel):
 class LicenseCheckRequest(BaseModel):
     """授权校验请求"""
     shadow_account: str = Field(..., description="影刀账号")
+    device_fingerprint: Optional[str] = Field(None, description="设备指纹（用于单设备登录）")
 
 
 class LicenseCheckResponse(BaseModel):
@@ -36,6 +37,7 @@ class LicenseResponse(BaseModel):
     expire_at: datetime
     activated_at: Optional[datetime]
     last_check_at: Optional[datetime]
+    device_fingerprint: Optional[str] = None  # 设备指纹
     created_at: datetime
 
     class Config:

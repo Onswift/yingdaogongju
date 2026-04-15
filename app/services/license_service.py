@@ -139,6 +139,60 @@ class LicenseService:
         return license
 
     @staticmethod
+    def check_and_bind_device(db: Session, shadow_account: str, device_fingerprint: str) -> Tuple[bool, str, Optional[License]]:
+        """
+        检查并绑定设备指纹
+
+        返回：(是否允许，消息，License 对象)
+        """
+        license = LicenseService.get_by_account(db, shadow_account)
+        if not license:
+            return False, "授权不存在", None
+
+        # 检查授权状态
+        status, _ = LicenseService.get_license_status(license)
+        if status != "active":
+            return False, f"授权状态异常：{status}", license
+
+        # 未绑定设备，首次绑定
+        if not license.device_fingerprint:
+            license.device_fingerprint = device_fingerprint
+            license.last_device_seen_at = datetime.now()
+            db.commit()
+            logger.info(f"设备绑定：account={shadow_account}, fingerprint={device_fingerprint[:16]}...")
+            return True, "设备已绑定", license
+
+        # 设备指纹匹配
+        if license.device_fingerprint == device_fingerprint:
+            license.last_device_seen_at = datetime.now()
+            db.commit()
+            return True, "设备验证通过", license
+
+        # 设备不匹配，拒绝
+        logger.warning(f"设备不匹配：account={shadow_account}, 已绑定={license.device_fingerprint[:16]}..., 请求={device_fingerprint[:16]}...")
+        return False, "该账号已在其他设备登录，如需切换设备请联系管理员解绑", license
+
+    @staticmethod
+    def unbind_device(db: Session, shadow_account: str) -> Tuple[bool, str]:
+        """
+        解绑设备
+
+        返回：(是否成功，消息)
+        """
+        license = LicenseService.get_by_account(db, shadow_account)
+        if not license:
+            return False, "授权不存在"
+
+        if not license.device_fingerprint:
+            return False, "该账号未绑定设备"
+
+        license.device_fingerprint = None
+        license.last_device_seen_at = None
+        db.commit()
+        logger.info(f"设备解绑：account={shadow_account}")
+        return True, "设备已解绑"
+
+    @staticmethod
     def undo_redeem(db: Session, card_code: str, shadow_account: str) -> tuple:
         """
         撤销兑换（恢复卡密，扣除授权天数）

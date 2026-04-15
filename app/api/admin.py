@@ -123,6 +123,7 @@ async def list_licenses(
                 "expire_at": l.expire_at.isoformat(),
                 "activated_at": l.activated_at.isoformat() if l.activated_at else None,
                 "last_check_at": l.last_check_at.isoformat() if l.last_check_at else None,
+                "device_fingerprint": l.device_fingerprint,  # 设备指纹
                 "created_at": l.created_at.isoformat()
             } for l in licenses]
         })
@@ -185,6 +186,24 @@ async def unban_account(
         return success_response(message="账号已解禁")
     except Exception as e:
         logger.exception("解禁账号失败")
+        return error_response(ErrorCode.INTERNAL_ERROR, str(e))
+
+
+@router.post("/licenses/unbind-device", response_model=dict, summary="解绑设备")
+async def unbind_device(
+    shadow_account: str,
+    db: Session = Depends(get_db),
+    admin_token: str = Depends(verify_admin)
+):
+    """解绑指定账号的设备（允许重新绑定新设备）"""
+    try:
+        success, message = LicenseService.unbind_device(db, shadow_account)
+        if not success:
+            return error_response(ErrorCode.BAD_REQUEST, message)
+        LicenseService.write_license_log(db, shadow_account, "admin_update", "success", "设备被解绑")
+        return success_response(message=message)
+    except Exception as e:
+        logger.exception("解绑设备失败")
         return error_response(ErrorCode.INTERNAL_ERROR, str(e))
 
 
