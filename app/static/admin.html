@@ -755,6 +755,7 @@
             <div class="filters" style="margin-bottom: 16px;">
                 <div class="form-group" style="flex: 1; min-width: 150px;">
                     <select id="card-type" onchange="updateDurationDays()">
+                        <option value="trial" data-days="30">体验月卡 (30 天)</option>
                         <option value="month" data-days="30">月卡 (30 天)</option>
                         <option value="quarter" data-days="90">季卡 (90 天)</option>
                         <option value="year" data-days="365">年卡 (365 天)</option>
@@ -790,6 +791,7 @@
                     </select>
                     <select id="filter-type" onchange="loadCards()">
                         <option value="">全部类型</option>
+                        <option value="trial">体验月卡</option>
                         <option value="month">月卡</option>
                         <option value="quarter">季卡</option>
                         <option value="year">年卡</option>
@@ -1095,7 +1097,8 @@
             let html = '';
             cards.forEach(card => {
                 const daysDisplay = card.card_type === 'permanent' ? '永久' : `${card.duration_days}天`;
-                const typeDisplay = card.card_type === 'permanent' ? '永久卡' :
+                const typeDisplay = card.card_type === 'trial' ? '体验月卡' :
+                                    card.card_type === 'permanent' ? '永久卡' :
                                     card.card_type === 'month' ? '月卡' :
                                     card.card_type === 'quarter' ? '季卡' : '年卡';
                 html += `
