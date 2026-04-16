@@ -758,6 +758,7 @@
                         <option value="month" data-days="30">月卡 (30 天)</option>
                         <option value="quarter" data-days="90">季卡 (90 天)</option>
                         <option value="year" data-days="365">年卡 (365 天)</option>
+                        <option value="permanent" data-days="9999">永久卡 (∞)</option>
                     </select>
                 </div>
                 <div class="form-group" style="flex: 1; min-width: 120px;">
@@ -792,6 +793,7 @@
                         <option value="month">月卡</option>
                         <option value="quarter">季卡</option>
                         <option value="year">年卡</option>
+                        <option value="permanent">永久卡</option>
                     </select>
                     <input type="text" id="filter-used-by" placeholder="使用者" onchange="loadCards()">
                     <input type="text" id="filter-source" placeholder="来源" onchange="loadCards()">
@@ -1092,11 +1094,15 @@
 
             let html = '';
             cards.forEach(card => {
+                const daysDisplay = card.card_type === 'permanent' ? '永久' : `${card.duration_days}天`;
+                const typeDisplay = card.card_type === 'permanent' ? '永久卡' :
+                                    card.card_type === 'month' ? '月卡' :
+                                    card.card_type === 'quarter' ? '季卡' : '年卡';
                 html += `
                     <tr>
                         <td><span class="card-code-cell" onclick="copyCardCode('${card.card_code}')" title="点击复制">${card.card_code}</span></td>
-                        <td>${card.card_type}</td>
-                        <td>${card.duration_days}天</td>
+                        <td>${typeDisplay}</td>
+                        <td>${daysDisplay}</td>
                         <td><span class="status ${card.status}">${card.status === 'unused' ? '未使用' : card.status === 'used' ? '已使用' : card.status === 'disabled' ? '已禁用' : '已过期'}</span></td>
                         <td>${card.used_by || '-'}</td>
                         <td>${card.used_at ? card.used_at.split('T')[0] : '-'}</td>
@@ -1322,13 +1328,21 @@
 
             let html = '';
             licenses.forEach(l => {
-                const remainDays = Math.max(0, Math.floor((new Date(l.expire_at) - new Date()) / (1000*60*60*24)));
+                const expireDate = new Date(l.expire_at);
+                const isPermanent = expireDate.getFullYear() > 2050; // 9999 年视为永久
+                const remainDays = isPermanent ? 9999 : Math.max(0, Math.floor((expireDate - new Date()) / (1000*60*60*24)));
+                const remainDaysText = isPermanent ? '永久' : `${remainDays}天`;
+                const statusText = l.status === 'active' ? (isPermanent ? '永久活跃' : '活跃') :
+                                   l.status === 'expired' ? '已过期' :
+                                   l.status === 'banned' ? '已禁用' : l.status;
+                const expireDateText = isPermanent ? '永久有效' : l.expire_at.replace('T', ' ').split('.')[0];
+
                 html += `
                     <tr>
                         <td style="font-weight: 500;">${l.shadow_account}</td>
-                        <td><span class="status ${l.status}">${l.status === 'active' ? '活跃' : l.status === 'expired' ? '已过期' : '已禁用'}</span></td>
-                        <td>${l.expire_at.replace('T', ' ').split('.')[0]}</td>
-                        <td style="${remainDays <= 7 ? 'color: var(--danger); font-weight: 500;' : ''}">${remainDays}天</td>
+                        <td><span class="status ${l.status}">${statusText}</span></td>
+                        <td>${expireDateText}</td>
+                        <td style="${!isPermanent && remainDays <= 7 ? 'color: var(--danger); font-weight: 500;' : ''}">${remainDaysText}</td>
                         <td>${l.activated_at ? l.activated_at.replace('T', ' ').split('.')[0] : '-'}</td>
                         <td>${l.last_check_at ? l.last_check_at.replace('T', ' ').split('.')[0] : '-'}</td>
                         <td style="font-family: monospace; font-size: 12px; color: #666;">${l.device_fingerprint ? l.device_fingerprint.substring(0, 16) + '...' : '未绑定'}</td>
