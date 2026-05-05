@@ -156,7 +156,7 @@ class LicenseService:
 
         # 检查授权状态
         status, _ = LicenseService.get_license_status(license)
-        if status != "active":
+        if status not in ("active", "permanent"):
             return False, f"授权状态异常：{status}", license
 
         # 未绑定设备，首次绑定
