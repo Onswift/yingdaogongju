@@ -791,7 +791,7 @@
                     </select>
                     <select id="filter-type" onchange="loadCards()">
                         <option value="">全部类型</option>
-                        <option value="trial">体验月卡</option>
+                        <option value="trial">体验卡</option>
                         <option value="month">月卡</option>
                         <option value="quarter">季卡</option>
                         <option value="year">年卡</option>
@@ -868,7 +868,7 @@
                     </thead>
                     <tbody>
                         <tr>
-                            <td colspan="6" class="empty-state">
+                            <td colspan="8" class="empty-state">
                                 <div class="icon">📭</div>
                                 <p>加载中...</p>
                             </td>
@@ -1325,7 +1325,7 @@
             const { licenses } = data;
 
             if (!licenses || licenses.length === 0) {
-                document.getElementById('licenses-table').innerHTML = `<tr><td colspan="6" class="empty-state"><div class="icon">📭</div><p>暂无数据</p></td></tr>`;
+                document.getElementById('licenses-table').innerHTML = `<tr><td colspan="8" class="empty-state"><div class="icon">📭</div><p>暂无数据</p></td></tr>`;
                 return;
             }
 

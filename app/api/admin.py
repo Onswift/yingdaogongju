@@ -11,6 +11,8 @@ from app.schemas.card import CardGenerateRequest, DisableCardRequest, UndoRedeem
 from app.schemas.license import AdminExtendRequest
 from app.services.card_service import CardService
 from app.services.license_service import LicenseService
+from app.models.redeem_log import RedeemLog
+from app.models.license_log import LicenseLog
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/admin", tags=["管理接口"])
