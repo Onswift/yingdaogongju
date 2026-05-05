@@ -38,6 +38,11 @@ async def redeem(req: RedeemRequest, db: Session = Depends(get_db)):
             else:
                 return error_response(ErrorCode.CARD_EXPIRED, msg)
 
+        # 3. 体验卡限制：每个账号只能兑换一次
+        if card.card_type == "trial" and CardService.has_used_trial(db, req.shadow_account):
+            LicenseService.write_redeem_log(db, req.card_code, req.shadow_account, "failure", "体验卡每个账号只能兑换一次")
+            return error_response(ErrorCode.BAD_REQUEST, "体验卡每个账号只能兑换一次")
+
         # 3. 查询或创建授权
         license = LicenseService.get_by_account(db, req.shadow_account)
 

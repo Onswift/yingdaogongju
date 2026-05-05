@@ -66,6 +66,14 @@ class CardService:
         return cards
 
     @staticmethod
+    def has_used_trial(db: Session, shadow_account: str) -> bool:
+        """检查账号是否已兑换过体验卡"""
+        return db.query(Card).filter(
+            Card.card_type == "trial",
+            Card.used_by == shadow_account
+        ).first() is not None
+
+    @staticmethod
     def get_by_code(db: Session, card_code: str) -> Optional[Card]:
         """根据卡密查询"""
         return db.query(Card).filter(Card.card_code == card_code).first()
