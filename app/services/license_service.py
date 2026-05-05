@@ -57,14 +57,14 @@ class LicenseService:
         delta = license.expire_at - now
         remain_days = max(0, delta.days)
 
-        # 永久授权（9999 天）
-        if remain_days >= 9000:
-            return "permanent", 9999
-
+        # 禁用优先
         if license.status == "banned":
             return "banned", 0
         if now >= license.expire_at:
             return "expired", 0
+        # 永久授权（9999 天）
+        if remain_days >= 9000:
+            return "permanent", 9999
         return "active", remain_days
 
     @staticmethod
