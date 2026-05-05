@@ -233,9 +233,12 @@ class LicenseService:
         from datetime import timedelta
         license.expire_at = license.expire_at - timedelta(days=card.duration_days)
 
-        # 如果到期时间已过，设置为过期
-        if license.expire_at < datetime.now():
-            license.status = "expired"
+        # 根据扣除后的到期时间更新状态
+        if license.status != "banned":
+            if license.expire_at < datetime.now():
+                license.status = "expired"
+            else:
+                license.status = "active"
 
         license.updated_at = datetime.now()
         db.commit()
